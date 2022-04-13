@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <Version>0.8.0</Version>
+        <Authors>Yansong Huang</Authors>
+        <Product>MongoRepository</Product>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <Description>MongoDb Repository with options of read-only, read-write, paginated, auditting, cache and telemetry (Azure ApplicationInsights)</Description>
+        <PackageProjectUrl>https://github.com/hysyzq/YSMongoRepository</PackageProjectUrl>
+        <Company>hysyzq</Company>
+        <PackageTags>mongo, mongodb, repository, cache, telemetry</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/hysyzq/YSMongoRepository</RepositoryUrl>
+        <PackageId>YsMongoRepository</PackageId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.ApplicationInsights" Version="2.18.0" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="5.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
+        <PackageReference Include="MongoDB.Driver" Version="2.13.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    </ItemGroup>
+</Project>

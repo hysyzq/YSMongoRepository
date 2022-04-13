@@ -1,0 +1,16 @@
+**/obj
+**/bin
+[Nn]uget.[Cc]onfig
+**/[Pp]ackages
+charts
+TestResults
+.DS_Store
+
+
+# Visual Studio 2015 cache/options directory
+.vs/
+
+# ReSharper is a .NET coding add-in
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user

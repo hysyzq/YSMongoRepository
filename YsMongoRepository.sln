@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31702.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoRepository", "MongoRepository\MongoRepository.csproj", "{5B9AFB0A-EF10-4825-8A1C-A643A8C44271}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{853A6F57-E9D7-40CF-9F57-546575967432}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoRepositoryExamples", "MongoRepositoryExamples\MongoRepositoryExamples.csproj", "{0D37784C-D4AC-4F9A-AEB1-03A4BA8E76EF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5B9AFB0A-EF10-4825-8A1C-A643A8C44271}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B9AFB0A-EF10-4825-8A1C-A643A8C44271}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B9AFB0A-EF10-4825-8A1C-A643A8C44271}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B9AFB0A-EF10-4825-8A1C-A643A8C44271}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D37784C-D4AC-4F9A-AEB1-03A4BA8E76EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D37784C-D4AC-4F9A-AEB1-03A4BA8E76EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D37784C-D4AC-4F9A-AEB1-03A4BA8E76EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D37784C-D4AC-4F9A-AEB1-03A4BA8E76EF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A31BA2A9-B812-4B4F-9A8D-EECFFA5C8617}
+	EndGlobalSection
+EndGlobal

@@ -16,13 +16,13 @@ namespace MongoRepository
 
         public MongoWithAuditContext(IOptions<MongoDbOptions> mongoOptions, IMongoClientFactory factory) : base(mongoOptions, factory)
         {
-            var auditAttribute = (EntityAuditAttribute)Attribute.GetCustomAttribute(typeof(TEntity), typeof(EntityAuditAttribute));
+            var auditAttribute = (EntityAuditAttribute?)Attribute.GetCustomAttribute(typeof(TEntity), typeof(EntityAuditAttribute));
             _entityAuditCollectionName = auditAttribute?.AuditCollection ?? _defaultAuditName;
         }
 
-        public IMongoCollection<TAudit> AuditCollection()
+        public IMongoCollection<TAudit>? AuditCollection()
         {
-            var auditCollection = ReadWriteDatabase.GetCollection<TAudit>(_entityAuditCollectionName);
+            var auditCollection = ReadWriteDatabase?.GetCollection<TAudit>(_entityAuditCollectionName);
             
             return auditCollection;
         }

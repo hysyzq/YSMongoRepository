@@ -1,16 +1,16 @@
+using System;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using System;
-using System.Diagnostics.CodeAnalysis;
 
 namespace MongoRepository
 {
-    [ExcludeFromCodeCoverage]
     /// <summary>
     /// Helpers for configuration mongo with application insights telemetry
     /// </summary>
-    public static class MongoApplicationInsightsServiceCollectionExtensions
+    [ExcludeFromCodeCoverage]
+    public static class MongoTelemetryServiceCollectionExtensions
     {
         /// <summary>
         /// Add an IMongoClientFactory instance configured with the given settings
@@ -20,13 +20,18 @@ namespace MongoRepository
         /// <returns>The services container</returns>
         public static IServiceCollection AddMongoClientFactory(
             this IServiceCollection services,
-            MongoApplicationInsightsSettings settings = null
-        ) => services
-                .AddSingleton(settings ?? new MongoApplicationInsightsSettings())
+            MongoTelemetrySettings? settings = null
+        )
+        {
+            MongoIndexIndicator.ForceBuild();
+            services
+                .AddSingleton(settings ?? new MongoTelemetrySettings())
                 .AddSingleton<IMongoClientFactory>(sp => new MongoClientFactory(
                     sp.GetService<TelemetryClient>(),
-                    sp.GetRequiredService<MongoApplicationInsightsSettings>()
+                    sp.GetRequiredService<MongoTelemetrySettings>()
                 ));
+            return services;
+        } 
 
         private static IMongoClientFactory GetFactory(IServiceProvider sp) =>
             sp.GetRequiredService<IMongoClientFactory>();
@@ -41,7 +46,7 @@ namespace MongoRepository
         public static IServiceCollection AddMongoClient(
             this IServiceCollection services,
             string connectionString,
-            MongoApplicationInsightsSettings settings = null
+            MongoTelemetrySettings? settings = null
         ) => services
                 .AddMongoClientFactory(settings)
                 .AddSingleton(sp => GetFactory(sp).GetClient(connectionString));
@@ -56,7 +61,7 @@ namespace MongoRepository
         public static IServiceCollection AddMongoClient(
             this IServiceCollection services,
             MongoUrl url,
-            MongoApplicationInsightsSettings settings = null
+            MongoTelemetrySettings? settings = null
         ) => services
                 .AddMongoClientFactory(settings)
                 .AddSingleton(sp => GetFactory(sp).GetClient(url));
@@ -71,7 +76,7 @@ namespace MongoRepository
         public static IServiceCollection AddMongoClient(
             this IServiceCollection services,
             MongoClientSettings clientSettings,
-            MongoApplicationInsightsSettings settings = null
+            MongoTelemetrySettings? settings = null
         ) => services
                 .AddMongoClientFactory(settings)
                 .AddSingleton(sp => GetFactory(sp).GetClient(clientSettings));

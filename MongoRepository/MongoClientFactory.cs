@@ -1,7 +1,10 @@
-using Microsoft.ApplicationInsights;
-using MongoDB.Driver;
-using System.Collections.Generic;
+using System;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.ApplicationInsights;
+using MongoDB.Bson;
+using MongoDB.Driver;
+using MongoDB.Driver.Core.Events;
 
 namespace MongoRepository
 {
@@ -11,19 +14,19 @@ namespace MongoRepository
     [ExcludeFromCodeCoverage]
     public class MongoClientFactory : IMongoClientFactory
     {
-        private readonly TelemetryClient _telemetryClient;
+        private readonly TelemetryClient? _telemetryClient;
 
         /// <summary>
         /// Client pool to keep the client singleton as recommended.
         /// MongoClient is thread-safe
         /// ref: https://mongodb.github.io/mongo-csharp-driver/2.9/reference/driver/connecting/#re-use
         /// </summary>
-        private readonly Dictionary<string, IMongoClient> _clientPool = new Dictionary<string, IMongoClient>();
+        private readonly ConcurrentDictionary<string, IMongoClient> _clientPool = new ();
         
         /// <summary>
         /// The telemetry settings in use
         /// </summary>
-        public MongoApplicationInsightsSettings Settings { get; }
+        public MongoTelemetrySettings Settings { get; }
 
         /// <summary>
         /// Construct a factory
@@ -31,11 +34,11 @@ namespace MongoRepository
         /// <param name="telemetryClient">The telemetry client to send telemetry to</param>
         /// <param name="settings">Telemetry settings</param>
         public MongoClientFactory(
-            TelemetryClient telemetryClient = null,
-            MongoApplicationInsightsSettings settings = null)
+            TelemetryClient? telemetryClient = null,
+            MongoTelemetrySettings? settings = null)
         {
             _telemetryClient = telemetryClient;
-            Settings = settings ?? new MongoApplicationInsightsSettings();
+            Settings = settings ?? new MongoTelemetrySettings();
         }
 
         /// <summary>
@@ -47,14 +50,27 @@ namespace MongoRepository
         {
             if (_telemetryClient != null)
             {
-                var mongoApplicationInsightsTelemetry = new MongoApplicationInsightsTelemetry();
+                var mongoApplicationInsightsTelemetry = new MongoTelemetry();
                 mongoApplicationInsightsTelemetry.Setup(clientSettings, _telemetryClient, Settings);
+            }
+            if (Settings.EnableDebugMode)
+            {
+                clientSettings.ClusterConfigurator = builder =>
+                {
+                    builder.Subscribe<CommandStartedEvent>(e =>
+                    {
+                        Console.WriteLine($"Command: {e.CommandName}, Details: {e.Command.ToJson()}");
+                    });
+                };
             }
             var key = clientSettings.ToString();
             if (!_clientPool.TryGetValue(key, out var client))
             {
                 client = new MongoClient(clientSettings);
-                if (_telemetryClient != null) _clientPool.Add(key, client);
+                if (_telemetryClient != null)
+                {
+                    _clientPool.TryAdd(key, client);
+                }
             }
             return client;
         }
@@ -64,8 +80,12 @@ namespace MongoRepository
         /// </summary>
         /// <param name="connectionString">The connection string to use</param>
         /// <returns>The client</returns>
-        public IMongoClient GetClient(string connectionString)
+        public IMongoClient GetClient(string? connectionString)
         {
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new ArgumentNullException("connectionString");
+            }
             return GetClient(
                 MongoClientSettings.FromConnectionString(connectionString));
         }

@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace MongoRepository
 {
     [ExcludeFromCodeCoverage]
-    public class MongoApplicationInsightsSettings
+    public class MongoTelemetrySettings
     {
         /// <summary>
         /// Mongo commands which will be ignored
@@ -34,5 +34,7 @@ namespace MongoRepository
         /// Gets or sets a value indicating whether to track the Mongo command text in MongoDB dependencies.
         /// </summary>
         public bool EnableMongoCommandTextInstrumentation { get; set; } = true;
+
+        public bool EnableDebugMode { get; set; } = false;
     }
 }

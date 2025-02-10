@@ -20,7 +20,7 @@ namespace MongoRepository
     }
 
     [ExcludeFromCodeCoverage]
-    internal class MongoApplicationInsightsTelemetry
+    internal class MongoTelemetry
     {
         // Ideally we'd use a ConditionalWeakTable here, but there are no actual objects that
         // we can track the lifetime of in the callbacks from mongo. Instead, the time the
@@ -29,23 +29,23 @@ namespace MongoRepository
         // a started event for a request, but no success / failure callback.
         private readonly ConcurrentDictionary<int, CachedQuery> _queryCache =
             new ConcurrentDictionary<int, CachedQuery>();
-        private TelemetryClient _telemetryClient;
-        private MongoApplicationInsightsSettings _settings;
+        private TelemetryClient? _telemetryClient;
+        private MongoTelemetrySettings? _settings;
         private long _nextPruneTimeTicks;
 
-        public MongoApplicationInsightsTelemetry(
+        public MongoTelemetry(
             MongoClientSettings clientSettings, 
-            TelemetryClient telemetryClient,
-            MongoApplicationInsightsSettings settings
+            TelemetryClient? telemetryClient,
+            MongoTelemetrySettings settings
         )
         {
             Setup(clientSettings, telemetryClient, settings);
         }
 
-        public MongoApplicationInsightsTelemetry(){}
+        public MongoTelemetry(){}
 
-        public void Setup(MongoClientSettings clientSettings, TelemetryClient telemetryClient,
-            MongoApplicationInsightsSettings settings)
+        public void Setup(MongoClientSettings clientSettings, TelemetryClient? telemetryClient,
+            MongoTelemetrySettings settings)
         {
             if (clientSettings == null)
             {
@@ -75,7 +75,7 @@ namespace MongoRepository
                 return;
             }
 
-            var nextPruneTime = now.Add(_settings.MaxQueryTime).Ticks;
+            var nextPruneTime = now.Add(_settings!.MaxQueryTime).Ticks;
 
             if (Interlocked.CompareExchange(ref _nextPruneTimeTicks, nextPruneTime, currentPruneTime) != currentPruneTime)
             {
@@ -93,7 +93,7 @@ namespace MongoRepository
             }
         }
 
-        internal static string FormatEndPoint(EndPoint endPoint)
+        internal static string? FormatEndPoint(EndPoint endPoint)
         {
             if (endPoint is DnsEndPoint dnsEndPoint)
             {
@@ -106,7 +106,7 @@ namespace MongoRepository
         {
             Prune(DateTime.UtcNow);
 
-            if (_settings.FilteredCommands.Contains(evt.CommandName))
+            if (_settings!.FilteredCommands.Contains(evt.CommandName))
             {
                 return;
             }
@@ -178,7 +178,7 @@ namespace MongoRepository
                 return;
             }
             query.Telemetry.Duration = evt.Duration;
-            _telemetryClient.TrackDependency(query.Telemetry);
+            _telemetryClient?.TrackDependency(query.Telemetry);
         }
 
         internal void OnCommandFailed(CommandFailedEvent evt)
@@ -191,7 +191,7 @@ namespace MongoRepository
             telemetry.Success = false;
             telemetry.Properties["Exception"] = evt.Failure.ToInvariantString();
             query.Telemetry.Duration = evt.Duration;
-            _telemetryClient.TrackDependency(query.Telemetry);
+            _telemetryClient?.TrackDependency(query.Telemetry);
         }
     }
 }

@@ -9,7 +9,7 @@ namespace MongoRepository
     {
         /// <summary>	Gets or sets the name. </summary>
         /// <value>	The name of the audit entity. </value>
-        public string AuditCollection { get; set; }
+        public string? AuditCollection { get; set; } 
 
         /// <summary>	Default constructor. </summary>
         public EntityAuditAttribute()

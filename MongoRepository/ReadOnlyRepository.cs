@@ -20,21 +20,27 @@ namespace MongoRepository
         /// <summary>   Constructor. </summary>
         /// <param name="mongoOptions">   The mongoDB connection options. </param>
         /// <param name="factory"> The mongo client factory</param>
-        protected ReadOnlyRepository(IOptions<MongoDbOptions> mongoOptions, IMongoClientFactory factory)
+        /// <param name="tenantIdentificationService"> tenant ID service (optional)</param>
+        /// <param name="customizedIndexService">provide customized index builder (optional)</param>
+        protected ReadOnlyRepository(
+            IOptions<MongoDbOptions> mongoOptions, 
+            IMongoClientFactory factory, 
+            ITenantIdentificationService? tenantIdentificationService = null, 
+            ICustomizedIndexBuilder? customizedIndexService = null)
         {
-            var context = new MongoContext<TEntity>(mongoOptions, factory);
+            var context = new MongoContext<TEntity>(mongoOptions, factory, tenantIdentificationService, customizedIndexService);
             Collection = context.Collection(true);
         }
 
         /// <summary>   Gets the mongoDB collection. </summary>
         /// <value> The mongoDB collection. </value>
-        public virtual IMongoCollection<TEntity> Collection { get; }
+        public virtual IMongoCollection<TEntity>? Collection { get; }
 
 
         /// <summary>	Gets a t entity using the given identifier asynchronously. </summary>
         /// <param name="id">	The Identifier to get. </param>
         /// <returns>	A TEntity. </returns>
-        public virtual async Task<TEntity> Get(TKey id)
+        public virtual async Task<TEntity?> Get(TKey id)
         {
             var filter = Builders<TEntity>.Filter.Eq(nameof(IEntity<TKey>.Id), id);
             TEntity result = await Collection.Find(filter).FirstOrDefaultAsync().ConfigureAwait(false);
@@ -53,11 +59,12 @@ namespace MongoRepository
 
         /// <summary>	Gets first item in this collection matching a given filter asynchronously. </summary>
         /// <param name="filterDefinition">	A definition to filter the results. Defaults to an empty filter.</param>
+        /// <param name="findOptions"></param>
         /// <returns>	A TEntity. </returns>
-        public virtual async Task<TEntity> Get(FilterDefinition<TEntity> filterDefinition = null)
+        public virtual async Task<TEntity?> Get(FilterDefinition<TEntity>? filterDefinition = null, FindOptions? findOptions = null)
         {
             TEntity result = await Collection
-                .Find(filterDefinition ?? new BsonDocument())
+                .Find(filterDefinition ?? new BsonDocument(), findOptions)
                 .FirstOrDefaultAsync().ConfigureAwait(false);
             return result;
         }
@@ -65,7 +72,7 @@ namespace MongoRepository
         /// <summary>	Gets first item in this collection matching a given filter asynchronously. </summary>
         /// <param name="filter">	A linq expression to filter the results. </param>
         /// <returns>	A TEntity. </returns>
-        public virtual async Task<TEntity> Get<TProperty>(Expression<Func<TEntity, bool>> filter)
+        public virtual async Task<TEntity?> Get<TProperty>(Expression<Func<TEntity, bool>> filter)
         {
             TEntity result = await Collection
                 .AsQueryable()
@@ -81,7 +88,7 @@ namespace MongoRepository
         /// <returns>
         ///     An list that allows foreach to be used to process all items in this collection.
         /// </returns>
-        public virtual async Task<IList<TEntity>> GetAll(FilterDefinition<TEntity> filterDefinition)
+        public virtual async Task<IList<TEntity>> GetAll(FilterDefinition<TEntity>? filterDefinition)
         {
             IList<TEntity> result = await Collection
                 .Find(filterDefinition ?? new BsonDocument())
@@ -95,7 +102,7 @@ namespace MongoRepository
         /// <returns>
         ///     An list that allows foreach to be used to process all items in this collection.
         /// </returns>
-        public virtual async Task<IList<TEntity>> GetAll(FilterDefinition<TEntity> filterDefinition, SortDefinition<TEntity> sortDefinition)
+        public virtual async Task<IList<TEntity>> GetAll(FilterDefinition<TEntity>? filterDefinition, SortDefinition<TEntity>? sortDefinition)
         {
             IList<TEntity> result = await Collection
                 .Find(filterDefinition ?? new BsonDocument())
@@ -109,14 +116,15 @@ namespace MongoRepository
         /// <param name="sortDefinition">	The sorting definition for the result. Defaults to sort ascending by Id.</param>
         /// <param name="page">	The requested page number. </param>
         /// <param name="pageSize">	The number of items per page.</param>
+        /// <param name="findOptions"></param>
         /// <returns>
         ///     An list that allows foreach to be used to process all items in this collection.
         /// </returns>
-        public virtual async Task<IList<TEntity>> GetAll(FilterDefinition<TEntity> filterDefinition = null, SortDefinition<TEntity> sortDefinition = null, int? page = null, int? pageSize = null)
+        public virtual async Task<IList<TEntity>> GetAll(FilterDefinition<TEntity>? filterDefinition = null, SortDefinition<TEntity>? sortDefinition = null, int? page = null, int? pageSize = null, FindOptions? findOptions = null)
         {
             IList<TEntity> result;
             result = await Collection
-                .Find(filterDefinition ?? new BsonDocument())
+                .Find(filterDefinition ?? new BsonDocument(), findOptions)
                 .SelectPage(page, pageSize)
                 .Sort(sortDefinition ?? Builders<TEntity>.Sort.Ascending(nameof(IEntity<TKey>.Id)))
                 .ToListAsync().ConfigureAwait(false);
@@ -133,10 +141,10 @@ namespace MongoRepository
         /// <returns>
         ///     An list that allows foreach to be used to process all items in this collection.
         /// </returns>
-        public virtual async Task<PaginatedResult<TEntity>> GetPaginatedResult(FilterDefinition<TEntity> filterDefinition = null, int? page = null, int? pageSize = null, string sortBy = null, bool isDescending = false)
+        public virtual async Task<PaginatedResult<TEntity>> GetPaginatedResult(FilterDefinition<TEntity> filterDefinition, int? page = null, int? pageSize = null, string? sortBy = null, bool isDescending = false, FindOptions? findOptions = null)
         {
             var sortByDetails = Builders<TEntity>.Sort.By(sortBy, isDescending);
-            IList<TEntity> items = await GetAll(filterDefinition, sortByDetails.SortDefinition, page, pageSize);
+            IList<TEntity> items = await GetAll(filterDefinition, sortByDetails.SortDefinition, page, pageSize, findOptions);
             
             var response = new PaginatedResult<TEntity>()
             {
@@ -160,9 +168,9 @@ namespace MongoRepository
         /// <returns>
         ///     An list that allows foreach to be used to process all items in this collection.
         /// </returns>
-        public virtual async Task<IList<TEntity>> GetAll(string jsonFilterDefinition)
+        public virtual async Task<IList<TEntity>> GetAll(string? jsonFilterDefinition)
         {
-            JsonFilterDefinition<TEntity> filter = null;
+            JsonFilterDefinition<TEntity>? filter = default;
             if (!string.IsNullOrEmpty(jsonFilterDefinition))
             {
                 filter = new JsonFilterDefinition<TEntity>(jsonFilterDefinition);
@@ -170,30 +178,7 @@ namespace MongoRepository
 
             return await GetAll(filterDefinition: filter);
         }
-
-        /// <summary>	Gets all items in this collection asynchronously. </summary>
-        /// <param name="jsonFilterDefinition">	A definition to filter in a json string the results. Defaults to an empty filter.</param>
-        /// <param name="jsonSortingDefinition">	The sorting definition in a json string for the result. Defaults to sort ascending by Id.</param>
-        /// <returns>
-        ///     An list that allows foreach to be used to process all items in this collection.
-        /// </returns>
-        public virtual async Task<IList<TEntity>> GetAll(string jsonFilterDefinition, string jsonSortingDefinition)
-        {
-            JsonFilterDefinition<TEntity> filter = null;
-            if (!string.IsNullOrEmpty(jsonFilterDefinition))
-            {
-                filter = new JsonFilterDefinition<TEntity>(jsonFilterDefinition);
-            }
-
-            JsonSortDefinition<TEntity> sorting = null;
-            if (!string.IsNullOrEmpty(jsonSortingDefinition))
-            {
-                sorting = new JsonSortDefinition<TEntity>(jsonSortingDefinition);
-            }
-
-            return await GetAll(filterDefinition: filter, sortDefinition: sorting);
-        }
-
+        
         /// <summary>	Gets all items in this collection asynchronously. </summary>
         /// <param name="jsonFilterDefinition">	A definition to filter in a json string the results. Defaults to an empty filter.</param>
         /// <param name="jsonSortingDefinition">	The sorting definition in a json string for the result. Defaults to sort ascending by Id.</param>
@@ -202,15 +187,15 @@ namespace MongoRepository
         /// <returns>
         ///     An list that allows foreach to be used to process all items in this collection.
         /// </returns>
-        public virtual async Task<IList<TEntity>> GetAll(string jsonFilterDefinition, string jsonSortingDefinition, int? page = null, int? pageSize = null)
+        public virtual async Task<IList<TEntity>> GetAll(string? jsonFilterDefinition, string? jsonSortingDefinition, int? page = null, int? pageSize = null)
         {
-            JsonFilterDefinition<TEntity> filter = null;
+            JsonFilterDefinition<TEntity>? filter = default;
             if (!string.IsNullOrEmpty(jsonFilterDefinition))
             {
                 filter = new JsonFilterDefinition<TEntity>(jsonFilterDefinition);
             }
 
-            JsonSortDefinition<TEntity> sorting = null;
+            JsonSortDefinition<TEntity>? sorting = default;
             if (!string.IsNullOrEmpty(jsonSortingDefinition))
             {
                 sorting = new JsonSortDefinition<TEntity>(jsonSortingDefinition);
@@ -276,25 +261,6 @@ namespace MongoRepository
             return result;
         }
 
-
-        /// <summary>	Gets all items in this collection in descending order asynchronously. </summary>
-        /// <param name="filter">	A linq expression to filter the results. </param>
-        /// <param name="page">	The requested page number. </param>
-        /// <param name="pageSize">	The number of items per page.</param>
-        /// <returns>
-        ///     An list that allows foreach to be used to process all items in this collection.
-        /// </returns>
-        public virtual async Task<IList<TEntity>> GetAllDescending<TProperty>(Expression<Func<TEntity, bool>> filter, int? page = null, int? pageSize = null)
-        {
-            IList<TEntity> result;
-            result = await Collection
-                .AsQueryable()
-                .Where(filter)
-                .SelectPage(page, pageSize)
-                .ToListAsync().ConfigureAwait(false);
-            return result;
-        }
-
         /// <summary>	Gets all items in this collection in descending order asynchronously. </summary>
         /// <param name="sorting">	A linq expression to sort the results.</param>
         /// <param name="page">	The requested page number. </param>
@@ -339,7 +305,7 @@ namespace MongoRepository
         /// </summary>
         /// <param name="filterDefinition"></param>
         /// <returns></returns>
-        public virtual async Task<long> Count(FilterDefinition<TEntity> filterDefinition = null)
+        public virtual async Task<long> Count(FilterDefinition<TEntity>? filterDefinition = null)
         {
             var result = await Collection
                 .Find(filterDefinition ?? new BsonDocument())
@@ -354,7 +320,7 @@ namespace MongoRepository
         /// <returns></returns>
         public virtual async Task<long> Count(string jsonFilterDefinition)
         {
-            JsonFilterDefinition<TEntity> filter = null;
+            JsonFilterDefinition<TEntity>? filter = default;
             if (!string.IsNullOrEmpty(jsonFilterDefinition))
             {
                 filter = new JsonFilterDefinition<TEntity>(jsonFilterDefinition);

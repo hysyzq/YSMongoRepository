@@ -3,18 +3,18 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MongoRepository
 {
-    [ExcludeFromCodeCoverage]
     /// <summary> Attribute for index name. </summary>
-    [AttributeUsage(AttributeTargets.Property)]
+    [ExcludeFromCodeCoverage]
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
     public class EntityIndexAttribute : Attribute
     {
-        public string Name { get; }
+        public string? Name { get; }
         public EntityIndexUnique Unique { get; }
         public EntityIndexCaseInsensitive CaseInsensitive { get; }
+        public string? PartialFilter { get; }
 
         public EntityIndexAttribute()
         {
-            
         }
 
         public EntityIndexAttribute(EntityIndexUnique unique)
@@ -37,6 +37,14 @@ namespace MongoRepository
             Unique = unique;
             Name = name;
             CaseInsensitive = caseInsensitive;
+        }
+
+        public EntityIndexAttribute(string name, EntityIndexUnique unique, EntityIndexCaseInsensitive caseInsensitive, string? partialFilter)
+        {
+            Unique = unique;
+            Name = name;
+            CaseInsensitive = caseInsensitive;
+            PartialFilter = partialFilter;  // Set partial filter expression
         }
     }
 }

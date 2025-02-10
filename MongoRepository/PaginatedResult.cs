@@ -6,7 +6,7 @@ namespace MongoRepository
     [ExcludeFromCodeCoverage]
     public class PaginatedResult<T> 
     {
-        public PageInfo PageInfo { get; set; }
+        public PageInfo? PageInfo { get; set; }
         public IList<T> Items { get; set; }
 
         public PaginatedResult()
@@ -23,7 +23,7 @@ namespace MongoRepository
 
         public long? TotalCount { get; set; }
 
-        public string SortBy { get; set; }
+        public string? SortBy { get; set; }
 
         public bool? Desc { get; set; }
     }

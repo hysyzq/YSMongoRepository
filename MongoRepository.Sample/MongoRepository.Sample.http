@@ -1,0 +1,6 @@
+@MongoRepository.Sample_HostAddress = http://localhost:5232
+
+GET {{MongoRepository.Sample_HostAddress}}/sample/
+Accept: application/json
+
+###

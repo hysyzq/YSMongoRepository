@@ -10,7 +10,7 @@ namespace MongoRepository
         /// <summary>
         /// The telemetry settings in use
         /// </summary>
-        MongoApplicationInsightsSettings Settings { get; }
+        MongoTelemetrySettings Settings { get; }
 
         /// <summary>
         /// Get client with MongoClientSettings
@@ -30,6 +30,6 @@ namespace MongoRepository
         /// </summary>
         /// <param name="connectionString">The connection string to use</param>
         /// <returns>The client</returns>
-        IMongoClient GetClient(string connectionString);
+        IMongoClient GetClient(string? connectionString);
     }
 }

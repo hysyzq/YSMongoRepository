@@ -41,7 +41,7 @@ namespace MongoRepository
 
         public bool TryGet<T>(string key, out T val)
         {
-            val = default;
+            val = default!;
             if (_cacheOptions.DisableCache)
             {
                 _logger.LogDebug("== Cache ==> Get: cache disabled");
@@ -51,7 +51,10 @@ namespace MongoRepository
             sw.Start();
             var result = !string.IsNullOrWhiteSpace(key) && _cache.TryGetValue(key, out val);
             sw.Stop();
-            _logger.LogDebug($"== Cache ==> cache hit: {result}: {sw.Elapsed.TotalMilliseconds}ms for {key}");
+            _logger.LogDebug("== Cache ==> cache hit: {0}: {1}ms for {2}",
+                result,
+                sw.Elapsed.TotalMilliseconds,
+                key);
             return result;
         }
 
@@ -89,7 +92,9 @@ namespace MongoRepository
             sw.Start();
             _cache.Set(key, val, entryOptions);
             sw.Stop();
-            _logger.LogDebug($"== Cache ==> cache set: {sw.Elapsed.TotalMilliseconds}ms for {key}");
+            _logger.LogDebug("== Cache ==> cache set: {0}ms for {1}",
+                sw.Elapsed.TotalMilliseconds,
+                key);
         }
 
         public void Invalidate(string key)

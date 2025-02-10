@@ -19,12 +19,27 @@ namespace MongoRepository
 
         /// <summary>   Gets the mongoDB collection. </summary>
         /// <value> The mongoDB collection. </value>
-        public override IMongoCollection<TEntity> Collection { get; }
+        public override IMongoCollection<TEntity>? Collection { get; }
 
-        public IMongoCollection<TAudit> AuditCollection { get; }
+        public IMongoCollection<TAudit>? AuditCollection { get; }
 
-        protected ReadWriteWithAuditRepository(IOptions<MongoDbOptions> mongoOptions, IMongoClientFactory factory, ILogger<ReadWriteWithAuditRepository<TEntity, TKey, TAudit>> logger, IAuditService auditService)
-            : base(mongoOptions, factory)
+        /// <summary>
+        /// ReadWrite Repository with Auditing feature
+        /// </summary>
+        /// <param name="mongoOptions">The mongoDB connection options.</param>
+        /// <param name="factory">The mongo client factory</param>
+        /// <param name="logger">Logger to log auditing if any error</param>
+        /// <param name="auditService">Auditing for data change</param>
+        /// <param name="tenantIdentificationService"> tenant ID service (optional) </param>
+        /// <param name="customizedIndexService">provide customized index builder (optional) </param>
+        protected ReadWriteWithAuditRepository(
+            IOptions<MongoDbOptions> mongoOptions, 
+            IMongoClientFactory factory, 
+            ILogger<ReadWriteWithAuditRepository<TEntity, TKey, TAudit>> logger, 
+            IAuditService auditService,
+            ITenantIdentificationService? tenantIdentificationService = null,
+            ICustomizedIndexBuilder? customizedIndexService = null)
+            : base(mongoOptions, factory, tenantIdentificationService, customizedIndexService)
         {
             _logger = logger;
             var context = new MongoWithAuditContext<TEntity, TAudit>(mongoOptions, factory);
@@ -39,11 +54,11 @@ namespace MongoRepository
         /// <param name="auditDescription"> the audit description </param>
         /// <returns>	A TEntity. </returns>
         /// AuditException will be logged only, will not be thrown 
-        public virtual async Task<TEntity> AddWithAudit(TEntity entity, TAudit audit = default(TAudit), string auditDescription = null)
+        public virtual async Task<TEntity> AddWithAudit(TEntity entity, TAudit? audit = default(TAudit), string? auditDescription = null)
         {
             var result = await base.Add(entity);            
             BuildAuditObject(ref audit, null, result, AuditOperations.Add, auditDescription);
-            await AddAudit(audit);
+            await AddAudit(audit!);
             return result;
         }
 
@@ -54,12 +69,12 @@ namespace MongoRepository
         /// <param name="auditDescription"> the audit description </param>
         /// <returns>	A TEntity. </returns>
         /// AuditException will be logged only, will not be thrown 
-        public async Task<TEntity> UpdateWithAudit(TEntity entity, TAudit audit = default(TAudit), TEntity oldEntity = default(TEntity), string auditDescription = null)
+        public async Task<TEntity> UpdateWithAudit(TEntity entity, TAudit? audit = default(TAudit), TEntity? oldEntity = default(TEntity), string? auditDescription = null)
         {
             var old = oldEntity ?? await base.Get(entity.Id);
             var result = await base.Update(entity);
             BuildAuditObject(ref audit, old, result, AuditOperations.Update, auditDescription);
-            await AddAudit(audit);
+            await AddAudit(audit!);
             return result;
         }
 
@@ -68,16 +83,15 @@ namespace MongoRepository
         /// <param name="audit"> </param>
         /// <param name="auditDescription"> the audit description </param>
         /// AuditException will be logged only, will not be thrown 
-        public async Task<TEntity> DeleteWithAudit(TKey id, TAudit audit = default(TAudit), string auditDescription = null)
+        public async Task<TEntity?> DeleteWithAudit(TKey id, TAudit? audit = default(TAudit), string? auditDescription = null)
         {
-            var old = await base.FindAndDelete(id);
-            if (old == null)
+            var old = await FindAndDelete(id);
+            if (old != null)
             {
-                return null;
+                auditDescription ??= old.ToDescription();
+                BuildAuditObject(ref audit, old, null, AuditOperations.Delete, auditDescription);
+                await AddAudit(audit!);
             }
-            auditDescription ??= old.ToDescription();
-            BuildAuditObject(ref audit, old, null, AuditOperations.Delete, auditDescription);
-            await AddAudit(audit);
             return old;
         }
 
@@ -85,7 +99,7 @@ namespace MongoRepository
         {
             try
             {
-                await AuditCollection.InsertOneAsync(audit).ConfigureAwait(false);
+                await AuditCollection!.InsertOneAsync(audit).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -94,11 +108,11 @@ namespace MongoRepository
             }
         }
 
-        private void BuildAuditObject(ref TAudit audit, TEntity oldItem, TEntity newItem, string auditOperation, string auditDescription)
+        private void BuildAuditObject(ref TAudit? audit, TEntity? oldItem, TEntity? newItem, string? auditOperation, string? auditDescription)
         {            
-            var auditOperationText = string.Format(auditOperation, auditDescription).TrimEnd();
+            var auditOperationText = string.Format(auditOperation??string.Empty, auditDescription).TrimEnd();
             audit ??= _auditService.GetAuditInformation<TAudit>(auditOperationText);
-            audit.Collection = Collection.CollectionNamespace.ToString();
+            audit.Collection = Collection!.CollectionNamespace.ToString();
             audit.OldItem = JsonConvert.SerializeObject(oldItem);
             audit.NewItem = JsonConvert.SerializeObject(newItem);
             audit.OperatedAt = DateTimeOffset.UtcNow;

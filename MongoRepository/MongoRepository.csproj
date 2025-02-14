@@ -3,18 +3,19 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-	<Version>2.0.0</Version>
-	<Authors>Yansong Huang</Authors>
-	<Product>MongoRepository</Product>
-	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-	<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-	<Description>MongoDb Repository with options of read-only, read-write, paginated, auditting, Multi-tenant, cache and telemetry (Azure ApplicationInsights)</Description>
-	<PackageProjectUrl>https://github.com/hysyzq/YSMongoRepository</PackageProjectUrl>
-	<Company>hysyzq</Company>
-	<PackageTags>mongo, mongodb, repository, cache, telemetry</PackageTags>
-	<PackageLicenseExpression>MIT</PackageLicenseExpression>
-	<RepositoryUrl>https://github.com/hysyzq/YSMongoRepository</RepositoryUrl>
-	<PackageId>YsMongoRepository</PackageId>
+    <Version>1.0.1</Version>
+    <Authors>Yansong Huang</Authors>
+    <Product>MongoRepository</Product>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Description>MongoDb Repository with options of read-only, read-write, paginated, auditting, Multi-tenant, cache and telemetry (Azure ApplicationInsights)</Description>
+    <PackageProjectUrl>https://github.com/hysyzq/YSMongoRepository</PackageProjectUrl>
+    <Company>hysyzq</Company>
+    <PackageTags>mongo, mongodb, repository, cache, telemetry</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/hysyzq/YSMongoRepository</RepositoryUrl>
+    <PackageId>YsMongoRepository</PackageId>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +25,7 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
     <PackageReference Include="MongoDB.Driver" Version="2.28.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <None Include="README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>
